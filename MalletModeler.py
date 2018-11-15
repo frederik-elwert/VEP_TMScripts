@@ -328,18 +328,14 @@ def buildThetaAndMeta(docTopicPath, thetaPath, metaPath, chunk_size, args):
                 # If we're not chunking, this is pretty straightforward
                 if chunk_size is None:
                     # Loop through docTopics file, adding lines to theta and metadata
-                    firstLine = True
                     for line in dtFile:
-                        if firstLine:
-                            firstLine = False
-                        else:
-                            line = line.split()
-                            sparseLine = []
-                            for i in range(2, len(line), 2):
-                                if float(line[i+1]) > .001:
-                                    sparseLine += line[i:i+2]
-                            thetaWriter.writerow(sparseLine) # Take out docNum and filename for theta
-                            metaWriter.writerow([line[0], os.path.basename(line[1])]) # Just include docNum and filename for metadata
+                        line = line.split()
+                        sparseLine = []
+                        for i, value in enumerate(line[2:]):
+                            if float(value) > .001:
+                                sparseLine += [i, value]
+                        thetaWriter.writerow(sparseLine) # Take out docNum and filename for theta
+                        metaWriter.writerow([line[0], os.path.basename(line[1])]) # Just include docNum and filename for metadata
                 # If we are chunking, then we need to combine and normalize the rows for each file
                 else:
                     def writeFileLine(docNum, basename, thetaLine, numChunks, thetaWriter, metaWriter):
@@ -374,14 +370,13 @@ def buildThetaAndMeta(docTopicPath, thetaPath, metaPath, chunk_size, args):
                                 currBasename = basename
                                 numMiniFiles = 0
                                 currThetaline = {}
-                            for i in range(2, len(line), 2):
-                                line[i] = int(line[i])
-                                line[i+1] = float(line[i+1])
-                                if line[i+1] > .001:
-                                    if line[i] in currThetaline:
-                                        currThetaline[line[i]] += line[i+1]
+                            for i, value in enumerate(line[2:]):
+                                value = float(value)
+                                if value > .001:
+                                    if i in currThetaline:
+                                        currThetaline[i] += value
                                     else:
-                                        currThetaline[line[i]] = line[i+1]
+                                        currThetaline[i] = value
                             numMiniFiles += 1
                     writeFileLine(currDocNum, currBasename, currThetaline, numMiniFiles, thetaWriter, metaWriter)
 
